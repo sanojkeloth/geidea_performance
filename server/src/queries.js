@@ -8,7 +8,7 @@ const T = config.fullTable;
 // KPIs
 
 async function getKpis(filters) {
-  const { where, params, types } = buildWhere(filters);
+  const { where, params } = buildWhere(filters);
   const sql = `
     SELECT
       COALESCE(SUM(total), 0)                                         AS revenue,
@@ -24,7 +24,7 @@ async function getKpis(filters) {
     FROM ${T}
     ${where}
   `;
-  const rows = await runQuery(sql, params, types);
+  const rows = await runQuery(sql, params);
   return rows[0] || {};
 }
 
@@ -39,7 +39,7 @@ const GRANULARITY = {
 
 async function getSalesOverTime(filters, granularity = 'day') {
   const trunc = GRANULARITY[granularity] || GRANULARITY.day;
-  const { where, params, types } = buildWhere(filters);
+  const { where, params } = buildWhere(filters);
   const sql = `
     SELECT
       DATE_TRUNC(transaction_date, ${trunc}) AS bucket,
@@ -52,7 +52,7 @@ async function getSalesOverTime(filters, granularity = 'day') {
     GROUP BY bucket
     ORDER BY bucket
   `;
-  return runQuery(sql, params, types);
+  return runQuery(sql, params);
 }
 
 // --------------------------------------------------------------------
@@ -65,7 +65,7 @@ async function getTopByDimension(filters, dimension, limit = 10) {
     throw new Error(`Invalid dimension: ${dimension}`);
   }
   const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
-  const { where, params, types } = buildWhere(filters);
+  const { where, params } = buildWhere(filters);
   const sql = `
     SELECT
       ${dimension} AS label,
@@ -80,7 +80,7 @@ async function getTopByDimension(filters, dimension, limit = 10) {
     ORDER BY revenue DESC
     LIMIT ${safeLimit}
   `;
-  return runQuery(sql, params, types);
+  return runQuery(sql, params);
 }
 
 // --------------------------------------------------------------------
@@ -88,7 +88,7 @@ async function getTopByDimension(filters, dimension, limit = 10) {
 
 async function getTopProducts(filters, limit = 20) {
   const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 200);
-  const { where, params, types } = buildWhere(filters);
+  const { where, params } = buildWhere(filters);
   const sql = `
     SELECT
       sku,
@@ -105,14 +105,14 @@ async function getTopProducts(filters, limit = 20) {
     ORDER BY revenue DESC
     LIMIT ${safeLimit}
   `;
-  return runQuery(sql, params, types);
+  return runQuery(sql, params);
 }
 
 // --------------------------------------------------------------------
 // Day of week × store heatmap
 
 async function getDayOfWeekHeatmap(filters) {
-  const { where, params, types } = buildWhere(filters);
+  const { where, params } = buildWhere(filters);
   const sql = `
     SELECT
       EXTRACT(DAYOFWEEK FROM transaction_date) AS dow, -- 1=Sunday..7=Saturday
@@ -123,7 +123,7 @@ async function getDayOfWeekHeatmap(filters) {
     GROUP BY dow
     ORDER BY dow
   `;
-  return runQuery(sql, params, types);
+  return runQuery(sql, params);
 }
 
 // --------------------------------------------------------------------
@@ -140,7 +140,7 @@ async function getFilterOptions() {
       (SELECT MIN(transaction_date) FROM ${T}) AS min_date,
       (SELECT MAX(transaction_date) FROM ${T}) AS max_date
   `;
-  const rows = await runQuery(sql, {}, {}, 60 * 30); // cache 30 min
+  const rows = await runQuery(sql, {}, 60 * 30); // cache 30 min
   return rows[0] || {};
 }
 
