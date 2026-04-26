@@ -1,0 +1,16 @@
+node_modules
+client/node_modules
+server/node_modules
+client/dist
+.git
+.gitignore
+.env
+.env.local
+*.log
+.DS_Store
+.vscode
+.idea
+README.md
+deploy.sh
+keyfile*.json
+service-account*.json
