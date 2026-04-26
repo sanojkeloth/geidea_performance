@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
-  DollarSign, ShoppingBag, Receipt, Package,
+  Banknote, ShoppingBag, Receipt, Package,
   Store, Tag, BadgePercent, TrendingUp, Coins,
 } from 'lucide-react';
 import Layout from '../components/Layout.jsx';
@@ -128,8 +128,8 @@ export default function Dashboard({ user, onLogout }) {
     <Layout user={user} onLogout={onLogout} onRefresh={refresh} refreshing={loading}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-ink-900">Performance overview</h1>
-          <p className="text-sm text-ink-500">Period: <span className="font-medium text-ink-700">{periodLabel}</span></p>
+          <h1 className="text-2xl font-bold text-ink-100">Performance overview</h1>
+          <p className="text-sm text-ink-400">Period: <span className="font-medium text-ink-200">{periodLabel}</span></p>
         </div>
       </div>
 
@@ -141,13 +141,13 @@ export default function Dashboard({ user, onLogout }) {
       />
 
       {error && (
-        <div className="card card-pad text-red-600 bg-red-50 border-red-100">
+        <div className="card card-pad text-red-300 bg-red-950/40 border-red-900/60">
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        <KpiCard label="Revenue (gross)" value={compactMoney(kpis?.revenue)} sublabel={money(kpis?.revenue)} icon={DollarSign} accent="brand" />
+        <KpiCard label="Revenue (gross)" value={compactMoney(kpis?.revenue)} sublabel={money(kpis?.revenue)} icon={Banknote} accent="brand" />
         <KpiCard label="Net sales" value={compactMoney(kpis?.net_sales)} sublabel={money(kpis?.net_sales)} icon={TrendingUp} accent="emerald" />
         <KpiCard label="Transactions" value={n(kpis?.transactions)} sublabel={`${n(kpis?.items)} items sold`} icon={Receipt} accent="violet" />
         <KpiCard label="Avg. transaction" value={compactMoney(kpis?.avg_txn_value)} sublabel="Revenue / txn" icon={ShoppingBag} accent="sky" />

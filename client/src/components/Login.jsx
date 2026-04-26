@@ -21,15 +21,20 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 via-white to-brand-100 px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-ink-900 px-4 relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-brand-700/20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-brand-500/10 blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-sm relative">
         <div className="flex items-center gap-3 mb-8 justify-center">
           <div className="w-11 h-11 rounded-2xl bg-brand-600 text-white grid place-items-center shadow-cardLg">
             <BarChart3 size={22} />
           </div>
           <div>
-            <div className="text-xl font-bold text-ink-900">Geidea Performance</div>
-            <div className="text-xs text-ink-500">Sales analytics dashboard</div>
+            <div className="text-xl font-bold text-ink-100">Geidea Performance</div>
+            <div className="text-xs text-ink-400">Sales analytics dashboard</div>
           </div>
         </div>
 
@@ -55,7 +60,7 @@ export default function Login({ onLogin }) {
             />
           </div>
           {err && (
-            <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            <div className="text-sm text-red-300 bg-red-950/40 border border-red-900/60 rounded-lg px-3 py-2">
               {err}
             </div>
           )}
@@ -65,7 +70,7 @@ export default function Login({ onLogin }) {
           </button>
         </form>
 
-        <p className="text-center text-xs text-ink-400 mt-6">
+        <p className="text-center text-xs text-ink-500 mt-6">
           Internal team access only.
         </p>
       </div>

@@ -24,8 +24,8 @@ export default function FiltersBar({ filters, options, onChange, onReset }) {
   return (
     <div className="card card-pad">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-ink-700 font-semibold">
-          <CalendarRange size={18} />
+        <div className="flex items-center gap-2 text-ink-200 font-semibold">
+          <CalendarRange size={18} className="text-brand-400" />
           Filters
         </div>
         <button onClick={onReset} className="btn-ghost text-xs py-1.5 px-2.5">

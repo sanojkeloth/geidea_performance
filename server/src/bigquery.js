@@ -15,26 +15,28 @@ function cacheKey(sql, params) {
   return `${sql}::${JSON.stringify(flat)}`;
 }
 
-// Convert BigQuery wrapper types (BigQueryDate, BigQueryNumeric, etc.) into
-// plain JSON-friendly primitives so the frontend can use them directly.
+// Convert BigQuery wrapper types (BigQueryDate, BigQueryNumeric, Big.js, etc.)
+// into plain JSON-friendly primitives so the frontend can use them directly.
 function normalize(value) {
   if (value === null || value === undefined) return value;
   if (Array.isArray(value)) return value.map(normalize);
   if (typeof value === 'object') {
+    // Big.js instances (used for NUMERIC/BIGNUMERIC in some lib versions)
+    // have c (coefficient array), e (exponent), s (sign).
+    if (Array.isArray(value.c) && typeof value.e === 'number' && typeof value.s === 'number') {
+      const n = Number(value.toString());
+      return Number.isFinite(n) ? n : null;
+    }
+    // BigQueryDate / BigQueryDatetime / BigQueryTime / BigQueryNumeric all
+    // expose a string `.value`. Numeric strings are converted to JS numbers,
+    // everything else stays as a string (preserves dates/timestamps).
     if (typeof value.value === 'string') {
-      const ctorName = value.constructor && value.constructor.name;
-      // Numeric wrappers → plain JS number
-      if (
-        ctorName === 'BigQueryDecimal'
-        || ctorName === 'BigQueryNumeric'
-        || ctorName === 'BigQueryBigNumeric'
-        || ctorName === 'Big'
-      ) {
-        const n = Number(value.value);
-        return Number.isFinite(n) ? n : value.value;
+      const s = value.value;
+      if (/^-?\d+(\.\d+)?$/.test(s)) {
+        const n = Number(s);
+        if (Number.isFinite(n)) return n;
       }
-      // Date / Datetime / Time wrappers → ISO-ish string
-      return value.value;
+      return s;
     }
     const out = {};
     for (const k of Object.keys(value)) out[k] = normalize(value[k]);

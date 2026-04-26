@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 html, body, #root {
@@ -11,24 +11,43 @@ html, body, #root {
 }
 
 body {
-  @apply bg-ink-50 text-ink-800 font-sans antialiased;
+  @apply bg-ink-900 text-ink-100 font-sans antialiased;
 }
 
-/* Recharts tweaks */
-.recharts-default-tooltip {
+/* Recharts overrides for dark UI */
+.recharts-default-tooltip,
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #131a2c !important;
+  border: 1px solid #1d2640 !important;
   border-radius: 12px !important;
-  border: 1px solid #e5e7eb !important;
-  box-shadow: 0 10px 30px -12px rgba(15,23,42,.15) !important;
+  box-shadow: 0 18px 40px -12px rgba(0,0,0,.55) !important;
+  color: #e6e9f2 !important;
 }
+.recharts-default-tooltip .recharts-tooltip-label {
+  color: #e6e9f2 !important;
+  font-weight: 600;
+}
+.recharts-default-tooltip .recharts-tooltip-item {
+  color: #cfd4e3 !important;
+}
+.recharts-cartesian-axis-tick-value tspan { fill: #6c7593; }
+.recharts-legend-item-text { color: #cfd4e3 !important; }
 
-/* Subtle scrollbar */
+/* Subtle scrollbars */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { @apply bg-ink-200 rounded-full; }
+::-webkit-scrollbar-thumb { background: #1d2640; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #2d3654; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* Date-input button stays visible on dark */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+  cursor: pointer;
+}
 
 @layer components {
   .card {
-    @apply bg-white rounded-2xl shadow-card border border-ink-100;
+    @apply bg-ink-800 rounded-2xl shadow-card border border-ink-700;
   }
   .card-pad {
     @apply p-5;
@@ -37,18 +56,21 @@ body {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50;
+    @apply btn bg-brand-600 text-white hover:bg-brand-500 disabled:opacity-50;
   }
   .btn-ghost {
-    @apply btn bg-white text-ink-700 border border-ink-200 hover:bg-ink-50;
+    @apply btn bg-ink-800 text-ink-200 border border-ink-700 hover:bg-ink-700/70;
   }
   .input {
-    @apply w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-800 outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500;
+    @apply w-full rounded-lg border border-ink-700 bg-ink-900/60 px-3 py-2 text-sm text-ink-100 outline-none transition focus:ring-2 focus:ring-brand-500/60 focus:border-brand-500;
   }
+  .input::placeholder { color: #4a5573; }
   .label {
-    @apply block text-xs font-medium uppercase tracking-wide text-ink-500 mb-1;
+    @apply block text-[11px] font-semibold uppercase tracking-wider text-ink-400 mb-1;
   }
   .pill {
-    @apply inline-flex items-center gap-1 rounded-full bg-ink-100 text-ink-600 px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1 rounded-full bg-ink-700/60 text-ink-200 px-2 py-0.5 text-xs font-medium;
   }
+  /* Recharts numeric tick text color (axis numbers) */
+  .recharts-text { fill: #6c7593; }
 }

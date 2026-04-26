@@ -1,10 +1,10 @@
 import {
-  ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend,
+  ResponsiveContainer, PieChart, Pie, Cell, Tooltip,
 } from 'recharts';
 import ChartCard from '../ChartCard.jsx';
 import { compactMoney } from '../../lib/format.js';
 
-const palette = ['#2849dc', '#3a66f6', '#5b8aff', '#8eb3ff', '#bcd2ff', '#10b981', '#34d399', '#f59e0b', '#f97316', '#ef4444'];
+const palette = ['#5b8aff', '#3a66f6', '#8eb3ff', '#bcd2ff', '#34d399', '#10b981', '#f59e0b', '#fb923c', '#f87171', '#a78bfa'];
 
 export default function CategoryDonut({ title, data }) {
   const items = (data || []).map((d, i) => ({
@@ -16,8 +16,8 @@ export default function CategoryDonut({ title, data }) {
 
   return (
     <ChartCard title={title}>
-      <div className="h-72 flex">
-        <div className="flex-1">
+      <div className="grid grid-rows-[1fr_auto] gap-4 h-72">
+        <div className="min-h-0">
           <ResponsiveContainer>
             <PieChart>
               <Tooltip
@@ -30,31 +30,35 @@ export default function CategoryDonut({ title, data }) {
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={92}
+                innerRadius={52}
+                outerRadius={86}
                 paddingAngle={2}
-                stroke="white"
+                stroke="#131a2c"
                 strokeWidth={2}
               >
                 {items.map((entry, idx) => (
                   <Cell key={idx} fill={entry.color} />
                 ))}
               </Pie>
-              <Legend
-                layout="vertical"
-                verticalAlign="middle"
-                align="right"
-                iconType="circle"
-                wrapperStyle={{ fontSize: 12 }}
-                formatter={(value, _e, idx) => {
-                  const it = items[idx];
-                  if (!it || total === 0) return value;
-                  return `${value} · ${((it.value / total) * 100).toFixed(1)}%`;
-                }}
-              />
             </PieChart>
           </ResponsiveContainer>
         </div>
+
+        <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+          {items.map((it) => {
+            const share = total > 0 ? (it.value / total) * 100 : 0;
+            return (
+              <li key={it.name} className="flex items-center gap-2 min-w-0">
+                <span
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ background: it.color }}
+                />
+                <span className="text-ink-200 truncate" title={it.name}>{it.name}</span>
+                <span className="ml-auto text-ink-400 tabular-nums flex-shrink-0">{share.toFixed(1)}%</span>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </ChartCard>
   );

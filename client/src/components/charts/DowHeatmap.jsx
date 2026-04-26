@@ -16,17 +16,19 @@ export default function DowHeatmap({ data }) {
           const rev = Number(row?.revenue) || 0;
           const txns = Number(row?.transactions) || 0;
           const intensity = max > 0 ? rev / max : 0;
-          const bg = `rgba(40, 73, 220, ${0.08 + intensity * 0.85})`;
+          // Blend brand-500 over the dark card background.
+          const bg = `rgba(91, 138, 255, ${0.08 + intensity * 0.55})`;
+          const ring = `rgba(91, 138, 255, ${0.15 + intensity * 0.45})`;
           return (
             <div
               key={dow}
-              className="rounded-xl p-3 text-center text-white transition hover:scale-[1.02]"
-              style={{ background: bg }}
+              className="rounded-xl p-3 text-center transition hover:scale-[1.02] border"
+              style={{ background: bg, borderColor: ring }}
               title={`${name}: ${compactMoney(rev)} · ${compact(txns)} txns`}
             >
-              <div className="text-xs font-medium opacity-90">{name}</div>
-              <div className="text-base font-bold mt-1">{compactMoney(rev)}</div>
-              <div className="text-[11px] opacity-80 mt-0.5">{compact(txns)} txns</div>
+              <div className="text-xs font-medium text-ink-300">{name}</div>
+              <div className="text-base font-bold mt-1 text-ink-100">{compactMoney(rev)}</div>
+              <div className="text-[11px] text-ink-400 mt-0.5">{compact(txns)} txns</div>
             </div>
           );
         })}
