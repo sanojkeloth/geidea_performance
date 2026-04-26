@@ -32,7 +32,7 @@ async function getKpis(filters) {
 // Sales over time
 
 const GRANULARITY = {
-  day: 'DATE',
+  day: 'DAY',
   week: 'WEEK(MONDAY)',
   month: 'MONTH',
 };
