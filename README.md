@@ -32,7 +32,26 @@ You'll do this entirely in [Google Cloud Shell](https://shell.cloud.google.com),
 which is a free, browser-based terminal already authenticated to your GCP
 account.
 
-### One-click open
+### Mac one-click redeploy ("double-click to deploy")
+
+After the **first** deploy is done, you can redeploy the latest code by
+double-clicking a file on your Mac:
+
+1. From this repo, download **`Redeploy Geidea Dashboard.command`** to your
+   Desktop (in GitHub: open the file → click the download icon).
+2. The first time only — right-click the file in Finder → **Open** → **Open**
+   (this is macOS asking you to trust the script).
+3. From then on, just **double-click** it. It opens Cloud Shell in your
+   browser with a tutorial pane on the right that has a one-click
+   **Copy to Cloud Shell** button next to the redeploy command.
+4. Click that button → the terminal runs `bash redeploy.sh`, which pulls the
+   latest commit, reuses your existing dashboard password from the running
+   service, and redeploys (~3–5 minutes). Hard-refresh your dashboard tab
+   afterwards.
+
+> Tip: drag the `.command` file to your Mac Dock for true single-click access.
+
+### One-click open (alternative)
 
 > Click here to open Cloud Shell with this branch already cloned:
 >
