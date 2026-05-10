@@ -1,6 +1,8 @@
 import { CalendarRange, RotateCcw } from 'lucide-react';
+import { prettyEvent } from '../lib/labels.js';
 
-function Select({ label, value, onChange, options, placeholder = 'All' }) {
+function Select({ label, value, onChange, options, placeholder = 'All', formatLabel }) {
+  const fmt = formatLabel || ((o) => o);
   return (
     <div>
       <label className="label">{label}</label>
@@ -11,7 +13,7 @@ function Select({ label, value, onChange, options, placeholder = 'All' }) {
       >
         <option value="">{placeholder}</option>
         {(options || []).map((o) => (
-          <option key={o} value={o}>{o}</option>
+          <option key={o} value={o}>{fmt(o)}</option>
         ))}
       </select>
     </div>
@@ -59,7 +61,7 @@ export default function FiltersBar({ filters, options, onChange, onReset }) {
         </div>
         <Select label="Brand"    value={filters.brand}      options={options?.brands}     onChange={(v) => set({ brand: v })} />
         <Select label="Category" value={filters.category}   options={options?.categories} onChange={(v) => set({ category: v })} />
-        <Select label="Event"    value={filters.event_name} options={options?.events}     onChange={(v) => set({ event_name: v })} />
+        <Select label="Event"    value={filters.event_name} options={options?.events}     onChange={(v) => set({ event_name: v })} formatLabel={prettyEvent} />
       </div>
     </div>
   );

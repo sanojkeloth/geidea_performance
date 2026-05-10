@@ -12,9 +12,9 @@ import DataTable from '../components/DataTable.jsx';
 import SalesOverTime from '../components/charts/SalesOverTime.jsx';
 import HorizontalBars from '../components/charts/HorizontalBars.jsx';
 import CategoryDonut from '../components/charts/CategoryDonut.jsx';
-import DowHeatmap from '../components/charts/DowHeatmap.jsx';
 import { api } from '../lib/api.js';
 import { compactMoney, money, n } from '../lib/format.js';
+import { prettyEvent } from '../lib/labels.js';
 
 const initialFilters = () => ({
   from: null,
@@ -33,12 +33,10 @@ export default function Dashboard({ user, onLogout }) {
   const [kpis, setKpis] = useState(null);
   const [fbSplit, setFbSplit] = useState([]);
   const [series, setSeries] = useState([]);
-  const [topFbStores, setTopFbStores] = useState([]);
   const [topBrands, setTopBrands] = useState([]);
   const [segments, setSegments] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [eventBreakdown, setEventBreakdown] = useState([]);
-  const [dow, setDow] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
@@ -68,28 +66,24 @@ export default function Dashboard({ user, onLogout }) {
     try {
       const [
         kpisRes, fbRes, seriesRes,
-        fbStoresRes, brandsRes,
-        segmentsRes, prodsRes, eventsRes, dowRes,
+        brandsRes,
+        segmentsRes, prodsRes, eventsRes,
       ] = await Promise.all([
         api.kpis(filters),
         api.fbSplit(filters),
         api.salesOverTime(filters, granularity),
-        api.topFbStores(filters, 10),
         api.topByDimension('brand', filters, 10),
         api.topByDimension('segment', filters, 10),
         api.topProducts(filters, 20),
         api.topByDimension('event_name', filters, 10),
-        api.dowHeatmap(filters),
       ]);
       setKpis(kpisRes.data);
       setFbSplit(fbRes.data);
       setSeries(seriesRes.data);
-      setTopFbStores(fbStoresRes.data);
       setTopBrands(brandsRes.data);
       setSegments(segmentsRes.data);
       setTopProducts(prodsRes.data);
       setEventBreakdown(eventsRes.data);
-      setDow(dowRes.data);
     } catch (e) {
       setError(e.message || 'Failed to load');
     } finally {
@@ -180,12 +174,7 @@ export default function Dashboard({ user, onLogout }) {
         <CategoryDonut title="Revenue by segment" data={segmentDonutData} />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <HorizontalBars title="Top stores by revenue (F&B only)" data={topFbStores} currency />
-        <HorizontalBars title="Top brands by revenue" data={topBrands} currency />
-      </div>
-
-      <DowHeatmap data={dow} />
+      <HorizontalBars title="Top brands by revenue" data={topBrands} currency />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <DataTable
@@ -203,7 +192,7 @@ export default function Dashboard({ user, onLogout }) {
         <DataTable
           title="Event types"
           columns={[
-            { key: 'label', label: 'Event' },
+            { key: 'label', label: 'Event', render: prettyEvent },
             { key: 'transactions', label: 'Txns', align: 'right', render: numCol },
             { key: 'items', label: 'Items', align: 'right', render: numCol },
             { key: 'net_sales', label: 'Net sales', align: 'right', render: moneyCol },
