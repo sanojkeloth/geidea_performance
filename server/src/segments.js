@@ -57,6 +57,20 @@ function brandSql() {
 }
 
 // --------------------------------------------------------------------
+// City: derived from event_name. Unknown / unmapped events fall through
+// to 'Other'. Edit the WHEN list below to extend.
+const CITY_SQL = `
+  CASE
+    WHEN event_name = 'baladbeast25' THEN 'Jeddah'
+    WHEN event_name = 'onyx24'       THEN 'Jeddah'
+    WHEN event_name = 'mdlbeast1001' THEN 'Riyadh'
+    WHEN event_name = 'soundstorm23' THEN 'Riyadh'
+    WHEN event_name = 'soundstorm24' THEN 'Riyadh'
+    ELSE 'Other'
+  END
+`;
+
+// --------------------------------------------------------------------
 // Segment chip values that the client sends → SQL filter values.
 
 const SEGMENT_VALUES = {
@@ -70,6 +84,7 @@ const SEGMENT_VALUES = {
 
 module.exports = {
   SEGMENT_SQL,
+  CITY_SQL,
   BRAND_OVERRIDES,
   brandSql,
   SEGMENT_VALUES,

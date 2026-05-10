@@ -36,7 +36,7 @@ export default function FiltersBar({ filters, options, onChange, onReset }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <div>
           <label className="label">From</label>
           <input
@@ -59,6 +59,7 @@ export default function FiltersBar({ filters, options, onChange, onReset }) {
             onChange={(e) => set({ to: e.target.value || null })}
           />
         </div>
+        <Select label="City"     value={filters.city}       options={options?.cities}     onChange={(v) => set({ city: v })} />
         <Select label="Brand"    value={filters.brand}      options={options?.brands}     onChange={(v) => set({ brand: v })} />
         <Select label="Category" value={filters.category}   options={options?.categories} onChange={(v) => set({ category: v })} />
         <Select label="Event"    value={filters.event_name} options={options?.events}     onChange={(v) => set({ event_name: v })} formatLabel={prettyEvent} />

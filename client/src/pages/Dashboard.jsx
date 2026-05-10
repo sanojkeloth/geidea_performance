@@ -21,6 +21,7 @@ const initialFilters = () => ({
   to: null,
   segment: 'all',
   brand: null,
+  city: null,
   category: null,
   event_name: null,
 });

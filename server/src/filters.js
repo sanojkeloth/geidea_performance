@@ -3,7 +3,7 @@
 // into SQL — so this is safe from injection.
 
 const { BigQuery } = require('@google-cloud/bigquery');
-const { SEGMENT_SQL, brandSql, SEGMENT_VALUES } = require('./segments');
+const { SEGMENT_SQL, CITY_SQL, brandSql, SEGMENT_VALUES } = require('./segments');
 
 const bq = new BigQuery();
 
@@ -16,6 +16,7 @@ function parseFilters(query) {
     to: query.to || null,
     segment: (query.segment && SEGMENT_VALUES[query.segment]) ? query.segment : null,
     brand: query.brand && query.brand.trim() !== '' ? query.brand.trim() : null,
+    city: query.city && query.city.trim() !== '' ? query.city.trim() : null,
   };
   for (const k of COLUMN_FILTERS) {
     f[k] = query[k] && query[k].trim() !== '' ? query[k].trim() : null;
@@ -49,6 +50,11 @@ function buildWhere(filters) {
   if (filters.brand) {
     conditions.push(`(${brandSql()}) = @brand`);
     params.brand = filters.brand;
+  }
+
+  if (filters.city) {
+    conditions.push(`(${CITY_SQL}) = @city`);
+    params.city = filters.city;
   }
 
   for (const k of COLUMN_FILTERS) {

@@ -1,7 +1,7 @@
 const config = require('./config');
 const { runQuery } = require('./bigquery');
 const { buildWhere, withFb } = require('./filters');
-const { SEGMENT_SQL, brandSql } = require('./segments');
+const { SEGMENT_SQL, CITY_SQL, brandSql } = require('./segments');
 
 const T = config.fullTable;
 
@@ -181,6 +181,15 @@ async function getFilterOptions() {
       ) AS brands,
       ARRAY(SELECT DISTINCT category   FROM ${T} WHERE category   IS NOT NULL ORDER BY category)   AS categories,
       ARRAY(SELECT DISTINCT event_name FROM ${T} WHERE event_name IS NOT NULL ORDER BY event_name) AS events,
+      ARRAY(
+        SELECT city FROM (
+          SELECT DISTINCT ${CITY_SQL} AS city FROM ${T}
+        )
+        WHERE city IS NOT NULL
+        ORDER BY
+          CASE city WHEN 'Other' THEN 1 ELSE 0 END,
+          city
+      ) AS cities,
       (SELECT MIN(transaction_date) FROM ${T}) AS min_date,
       (SELECT MAX(transaction_date) FROM ${T}) AS max_date
   `;
