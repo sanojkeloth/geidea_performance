@@ -1,6 +1,7 @@
 const config = require('./config');
 const { runQuery } = require('./bigquery');
-const { buildWhere } = require('./filters');
+const { buildWhere, withFb } = require('./filters');
+const { SEGMENT_SQL, brandSql } = require('./segments');
 
 const T = config.fullTable;
 
@@ -26,6 +27,25 @@ async function getKpis(filters) {
   `;
   const rows = await runQuery(sql, params);
   return rows[0] || {};
+}
+
+// --------------------------------------------------------------------
+// F&B revenue split (for the combined Food/Beverage KPI tile)
+
+async function getFbSplit(filters) {
+  // Force F&B even if the global segment chip is set elsewhere.
+  const { where, params } = buildWhere(withFb(filters));
+  const sql = `
+    SELECT
+      ${SEGMENT_SQL} AS segment,
+      COALESCE(SUM(total), 0) AS revenue,
+      COALESCE(SUM(qty), 0)   AS items,
+      COUNT(DISTINCT txn_number) AS transactions
+    FROM ${T}
+    ${where}
+    GROUP BY segment
+  `;
+  return runQuery(sql, params);
 }
 
 // --------------------------------------------------------------------
@@ -58,33 +78,51 @@ async function getSalesOverTime(filters, granularity = 'day') {
 // --------------------------------------------------------------------
 // Top dimensions
 
+// Real columns are listed by name; virtual dimensions (brand, segment)
+// resolve to a SQL expression. Anything not in this map is rejected.
+function dimensionExpr(dimension) {
+  const real = {
+    store:        'store',
+    category:     'category',
+    product_name: 'product_name',
+    sku:          'sku',
+    event_name:   'event_name',
+  };
+  if (real[dimension]) return real[dimension];
+  if (dimension === 'brand')   return brandSql();
+  if (dimension === 'segment') return SEGMENT_SQL;
+  return null;
+}
+
 async function getTopByDimension(filters, dimension, limit = 10) {
-  // Whitelist the dimension column to keep SQL safe.
-  const allowed = ['store', 'category', 'terminal', 'cashier', 'product_name', 'sku', 'event_name'];
-  if (!allowed.includes(dimension)) {
-    throw new Error(`Invalid dimension: ${dimension}`);
-  }
+  const expr = dimensionExpr(dimension);
+  if (!expr) throw new Error(`Invalid dimension: ${dimension}`);
   const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
   const { where, params } = buildWhere(filters);
   const sql = `
     SELECT
-      ${dimension} AS label,
-      COALESCE(SUM(total), 0)                AS revenue,
-      COALESCE(SUM(net_sales), 0)            AS net_sales,
-      COALESCE(SUM(qty), 0)                  AS items,
-      COUNT(DISTINCT txn_number)             AS transactions
+      ${expr} AS label,
+      COALESCE(SUM(total), 0)        AS revenue,
+      COALESCE(SUM(net_sales), 0)    AS net_sales,
+      COALESCE(SUM(qty), 0)          AS items,
+      COUNT(DISTINCT txn_number)     AS transactions
     FROM ${T}
     ${where}
-    ${where ? 'AND' : 'WHERE'} ${dimension} IS NOT NULL
-    GROUP BY ${dimension}
+    GROUP BY label
+    HAVING label IS NOT NULL
     ORDER BY revenue DESC
     LIMIT ${safeLimit}
   `;
   return runQuery(sql, params);
 }
 
+// Top stores restricted to F&B (food + beverage) regardless of global filter.
+async function getTopFbStores(filters, limit = 10) {
+  return getTopByDimension(withFb(filters), 'store', limit);
+}
+
 // --------------------------------------------------------------------
-// Top products (more columns)
+// Top products
 
 async function getTopProducts(filters, limit = 20) {
   const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 200);
@@ -92,16 +130,16 @@ async function getTopProducts(filters, limit = 20) {
   const sql = `
     SELECT
       sku,
-      ANY_VALUE(product_name)                AS product_name,
-      ANY_VALUE(category)                    AS category,
-      COALESCE(SUM(qty), 0)                  AS items,
-      COALESCE(SUM(net_sales), 0)            AS net_sales,
-      COALESCE(SUM(total), 0)                AS revenue,
-      COUNT(DISTINCT txn_number)             AS transactions
+      ANY_VALUE(product_name) AS product_name,
+      ANY_VALUE(category)     AS category,
+      COALESCE(SUM(qty), 0)              AS items,
+      COALESCE(SUM(net_sales), 0)        AS net_sales,
+      COALESCE(SUM(total), 0)            AS revenue,
+      COUNT(DISTINCT txn_number)         AS transactions
     FROM ${T}
     ${where}
-    ${where ? 'AND' : 'WHERE'} sku IS NOT NULL
     GROUP BY sku
+    HAVING sku IS NOT NULL
     ORDER BY revenue DESC
     LIMIT ${safeLimit}
   `;
@@ -109,13 +147,13 @@ async function getTopProducts(filters, limit = 20) {
 }
 
 // --------------------------------------------------------------------
-// Day of week × store heatmap
+// Day of week heatmap
 
 async function getDayOfWeekHeatmap(filters) {
   const { where, params } = buildWhere(filters);
   const sql = `
     SELECT
-      EXTRACT(DAYOFWEEK FROM transaction_date) AS dow, -- 1=Sunday..7=Saturday
+      EXTRACT(DAYOFWEEK FROM transaction_date) AS dow,
       COALESCE(SUM(total), 0)                  AS revenue,
       COUNT(DISTINCT txn_number)               AS transactions
     FROM ${T}
@@ -127,27 +165,35 @@ async function getDayOfWeekHeatmap(filters) {
 }
 
 // --------------------------------------------------------------------
-// Filter dropdown options + date bounds (cached longer because they change less)
+// Filter dropdown options + date bounds
 
 async function getFilterOptions() {
   const sql = `
     SELECT
-      ARRAY(SELECT DISTINCT store      FROM ${T} WHERE store      IS NOT NULL ORDER BY store)      AS stores,
+      ARRAY(
+        SELECT brand FROM (
+          SELECT DISTINCT ${brandSql()} AS brand
+          FROM ${T}
+          WHERE store IS NOT NULL
+        )
+        WHERE brand IS NOT NULL
+        ORDER BY brand
+      ) AS brands,
       ARRAY(SELECT DISTINCT category   FROM ${T} WHERE category   IS NOT NULL ORDER BY category)   AS categories,
-      ARRAY(SELECT DISTINCT terminal   FROM ${T} WHERE terminal   IS NOT NULL ORDER BY terminal)   AS terminals,
-      ARRAY(SELECT DISTINCT cashier    FROM ${T} WHERE cashier    IS NOT NULL ORDER BY cashier)    AS cashiers,
       ARRAY(SELECT DISTINCT event_name FROM ${T} WHERE event_name IS NOT NULL ORDER BY event_name) AS events,
       (SELECT MIN(transaction_date) FROM ${T}) AS min_date,
       (SELECT MAX(transaction_date) FROM ${T}) AS max_date
   `;
-  const rows = await runQuery(sql, {}, 60 * 30); // cache 30 min
+  const rows = await runQuery(sql, {}, 60 * 30); // 30 min cache
   return rows[0] || {};
 }
 
 module.exports = {
   getKpis,
+  getFbSplit,
   getSalesOverTime,
   getTopByDimension,
+  getTopFbStores,
   getTopProducts,
   getDayOfWeekHeatmap,
   getFilterOptions,

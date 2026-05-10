@@ -3,20 +3,29 @@
 // into SQL — so this is safe from injection.
 
 const { BigQuery } = require('@google-cloud/bigquery');
+const { SEGMENT_SQL, brandSql, SEGMENT_VALUES } = require('./segments');
 
 const bq = new BigQuery();
 
-const FILTER_FIELDS = ['store', 'category', 'terminal', 'cashier', 'event_name'];
+// Filters that map directly to a real column.
+const COLUMN_FILTERS = ['category', 'event_name'];
 
 function parseFilters(query) {
   const f = {
-    from: query.from || null, // YYYY-MM-DD
-    to: query.to || null, // YYYY-MM-DD
+    from: query.from || null,
+    to: query.to || null,
+    segment: (query.segment && SEGMENT_VALUES[query.segment]) ? query.segment : null,
+    brand: query.brand && query.brand.trim() !== '' ? query.brand.trim() : null,
   };
-  for (const k of FILTER_FIELDS) {
+  for (const k of COLUMN_FILTERS) {
     f[k] = query[k] && query[k].trim() !== '' ? query[k].trim() : null;
   }
   return f;
+}
+
+// Apply F&B-only restriction on top of whatever the caller already passed.
+function withFb(filters) {
+  return { ...filters, segment: 'fb' };
 }
 
 function buildWhere(filters) {
@@ -25,17 +34,27 @@ function buildWhere(filters) {
 
   if (filters.from) {
     conditions.push('transaction_date >= @from');
-    params.from = bq.date(filters.from); // BigQueryDate carries DATE type
+    params.from = bq.date(filters.from);
   }
   if (filters.to) {
     conditions.push('transaction_date <= @to');
     params.to = bq.date(filters.to);
   }
 
-  for (const k of FILTER_FIELDS) {
+  if (filters.segment && SEGMENT_VALUES[filters.segment]) {
+    conditions.push(`(${SEGMENT_SQL}) IN UNNEST(@segment_values)`);
+    params.segment_values = SEGMENT_VALUES[filters.segment];
+  }
+
+  if (filters.brand) {
+    conditions.push(`(${brandSql()}) = @brand`);
+    params.brand = filters.brand;
+  }
+
+  for (const k of COLUMN_FILTERS) {
     if (filters[k]) {
       conditions.push(`${k} = @${k}`);
-      params[k] = filters[k]; // plain string → BigQuery infers STRING
+      params[k] = filters[k];
     }
   }
 
@@ -43,4 +62,4 @@ function buildWhere(filters) {
   return { where, params };
 }
 
-module.exports = { parseFilters, buildWhere, FILTER_FIELDS };
+module.exports = { parseFilters, buildWhere, withFb, COLUMN_FILTERS };

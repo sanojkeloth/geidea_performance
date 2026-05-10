@@ -37,6 +37,8 @@ router.get('/filters', safe(async () => q.getFilterOptions()));
 
 router.get('/kpis', safe(async (req) => q.getKpis(parseFilters(req.query))));
 
+router.get('/fb-split', safe(async (req) => q.getFbSplit(parseFilters(req.query))));
+
 router.get('/sales-over-time', safe(async (req) => {
   const granularity = ['day', 'week', 'month'].includes(req.query.granularity)
     ? req.query.granularity
@@ -44,17 +46,21 @@ router.get('/sales-over-time', safe(async (req) => {
   return q.getSalesOverTime(parseFilters(req.query), granularity);
 }));
 
-router.get('/top/:dimension', safe(async (req) => {
-  return q.getTopByDimension(
-    parseFilters(req.query),
-    req.params.dimension,
-    req.query.limit,
-  );
-}));
+router.get('/top/:dimension', safe(async (req) => q.getTopByDimension(
+  parseFilters(req.query),
+  req.params.dimension,
+  req.query.limit,
+)));
 
-router.get('/top-products', safe(async (req) => {
-  return q.getTopProducts(parseFilters(req.query), req.query.limit);
-}));
+router.get('/top-fb-stores', safe(async (req) => q.getTopFbStores(
+  parseFilters(req.query),
+  req.query.limit,
+)));
+
+router.get('/top-products', safe(async (req) => q.getTopProducts(
+  parseFilters(req.query),
+  req.query.limit,
+)));
 
 router.get('/dow-heatmap', safe(async (req) => q.getDayOfWeekHeatmap(parseFilters(req.query))));
 

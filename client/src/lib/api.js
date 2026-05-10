@@ -30,10 +30,12 @@ export const api = {
 
   filters: () => request('/api/filters'),
   kpis: (f) => request(`/api/kpis${qs(f)}`),
+  fbSplit: (f) => request(`/api/fb-split${qs(f)}`),
   salesOverTime: (f, granularity) =>
     request(`/api/sales-over-time${qs({ ...f, granularity })}`),
   topByDimension: (dimension, f, limit) =>
     request(`/api/top/${dimension}${qs({ ...f, limit })}`),
+  topFbStores: (f, limit) => request(`/api/top-fb-stores${qs({ ...f, limit })}`),
   topProducts: (f, limit) => request(`/api/top-products${qs({ ...f, limit })}`),
   dowHeatmap: (f) => request(`/api/dow-heatmap${qs(f)}`),
 };
