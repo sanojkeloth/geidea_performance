@@ -9,7 +9,6 @@ import SegmentTabs from '../components/SegmentTabs.jsx';
 import KpiCard from '../components/KpiCard.jsx';
 import FbSplitCard from '../components/FbSplitCard.jsx';
 import DataTable from '../components/DataTable.jsx';
-import SalesOverTime from '../components/charts/SalesOverTime.jsx';
 import HorizontalBars from '../components/charts/HorizontalBars.jsx';
 import CategoryDonut from '../components/charts/CategoryDonut.jsx';
 import { api } from '../lib/api.js';
@@ -29,12 +28,11 @@ const initialFilters = () => ({
 export default function Dashboard({ user, onLogout }) {
   const [filterOptions, setFilterOptions] = useState(null);
   const [filters, setFilters] = useState(initialFilters());
-  const [granularity, setGranularity] = useState('day');
 
   const [kpis, setKpis] = useState(null);
   const [fbSplit, setFbSplit] = useState([]);
-  const [series, setSeries] = useState([]);
   const [topBrands, setTopBrands] = useState([]);
+  const [topCategories, setTopCategories] = useState([]);
   const [segments, setSegments] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [eventBreakdown, setEventBreakdown] = useState([]);
@@ -66,22 +64,22 @@ export default function Dashboard({ user, onLogout }) {
     setError('');
     try {
       const [
-        kpisRes, fbRes, seriesRes,
-        brandsRes,
+        kpisRes, fbRes,
+        brandsRes, categoriesRes,
         segmentsRes, prodsRes, eventsRes,
       ] = await Promise.all([
         api.kpis(filters),
         api.fbSplit(filters),
-        api.salesOverTime(filters, granularity),
         api.topByDimension('brand', filters, 10),
+        api.topByDimension('category', filters, 10),
         api.topByDimension('segment', filters, 10),
         api.topProducts(filters, 20),
         api.topByDimension('event_name', filters, 10),
       ]);
       setKpis(kpisRes.data);
       setFbSplit(fbRes.data);
-      setSeries(seriesRes.data);
       setTopBrands(brandsRes.data);
+      setTopCategories(categoriesRes.data);
       setSegments(segmentsRes.data);
       setTopProducts(prodsRes.data);
       setEventBreakdown(eventsRes.data);
@@ -90,7 +88,7 @@ export default function Dashboard({ user, onLogout }) {
     } finally {
       setLoading(false);
     }
-  }, [filters, granularity, filtersReady, refreshNonce]);
+  }, [filters, filtersReady, refreshNonce]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
@@ -129,6 +127,15 @@ export default function Dashboard({ user, onLogout }) {
       revenue: s.revenue,
     }));
   }, [segments]);
+
+  // Top products → horizontal-bar shape (label = product_name).
+  const productBars = useMemo(
+    () => (topProducts || []).slice(0, 10).map((p) => ({
+      label: p.product_name || p.sku || '—',
+      revenue: p.revenue,
+    })),
+    [topProducts],
+  );
 
   return (
     <Layout user={user} onLogout={onLogout} onRefresh={refresh} refreshing={loading}>
@@ -170,12 +177,15 @@ export default function Dashboard({ user, onLogout }) {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div className="xl:col-span-2">
-          <SalesOverTime data={series} granularity={granularity} setGranularity={setGranularity} />
+          <HorizontalBars title="Sales by product" data={productBars} currency />
         </div>
         <CategoryDonut title="Revenue by segment" data={segmentDonutData} />
       </div>
 
-      <HorizontalBars title="Top brands by revenue" data={topBrands} currency />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <HorizontalBars title="Sales by brand" data={topBrands} currency />
+        <HorizontalBars title="Sales by category" data={topCategories} currency />
+      </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <DataTable
