@@ -12,7 +12,7 @@ Click the **Copy to Cloud Shell** icon on the right of the box below to run
 it instantly in the terminal:
 
 ```bash
-cd ~/geidea_performance && bash redeploy.sh
+bash redeploy.sh
 ```
 
 That's it. The script prints the public URL when it finishes (typically 3–5
